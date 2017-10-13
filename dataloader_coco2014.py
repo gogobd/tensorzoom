@@ -5,7 +5,7 @@ We are using 2014 Training images [80K/13GB] data set.
 
 import os
 import random
-from skimage import io
+import scipy.misc
 import numpy as np
 import Queue
 import thread
@@ -13,7 +13,8 @@ import thread
 
 def load_image(path, height, width):
     # load image
-    img = io.imread(path)
+#    img = io.imread(path)
+    img = scipy.misc.imread(path)
     img = img / 255.0
 
     # center crop
@@ -26,7 +27,7 @@ def load_image(path, height, width):
 
     # remove monotone
     if len(np.shape(img)) == 2:
-        print "monotone found"
+        print("monotone found")
         coloured = np.expand_dims(img, 2)
         img = np.concatenate((coloured, coloured, coloured), 2)
     return img
@@ -69,7 +70,7 @@ class DataSet:
             try:
                 self._prepare_next_batch()
             except:
-                print 'error found in batch: ', self.files[self.pos:self.pos + self.batch_size]
+                print('error found in batch: ', self.files[self.pos:self.pos + self.batch_size])
                 pass
 
     def start_loading(self):
@@ -84,13 +85,13 @@ class DataSet:
     def next_batch(self):
         (img_batch, batch) = self.queue.get()
         if self.print_path:
-            for path in batch: print path
+            for path in batch: print(path)
         return img_batch
 
 # if __name__ == '__main__':
 #     ds = DataSet(256, 256, 10, '../../datasets/coco2014/train2014')
-#     print ds.files[0]
-#     print ds.files[1]
+#     print(ds.files[0])
+#     print(ds.files[1])
 #
 #     batch = ds.next_batch()
-#     print len(batch)
+#     print(len(batch))

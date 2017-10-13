@@ -34,9 +34,7 @@ import tensorflow as tf
 
 import time
 import math
-import skimage
-import skimage.io
-import skimage.transform
+import scipy.misc
 
 from dataloader_coco2014 import DataSet
 
@@ -77,7 +75,7 @@ def train(ds, dis_learning_rate, gen_learning_rate):
 
         # use stitch training method, slice the image into tiles and concat as batches
         t = create_tiles(in_small, SIZE / 4, SIZE / 4, 4)
-        in_stitch = tf.concat(0, [tf.concat(0, t[y]) for y in xrange(4)])  # row1, row2, ...
+        in_stitch = tf.concat(0, [tf.concat(0, t[y]) for y in range(4)])  # row1, row2, ...
 
         generator = TensorZoomNet(trainable=True, npy_path=GEN_NPY)
         with tf.name_scope("generator"):
@@ -85,8 +83,8 @@ def train(ds, dis_learning_rate, gen_learning_rate):
 
         # stitch the tiles back together after split the batches
         gen_split = tf.split(0, 4 * 4, generator.output)
-        gen_result = tf.concat(1, [tf.concat(2, [gen_split[x] for x in xrange(4 * y, 4 * y + 4)])
-                                   for y in xrange(4)])
+        gen_result = tf.concat(1, [tf.concat(2, [gen_split[x] for x in range(4 * y, 4 * y + 4)])
+                                   for y in range(4)])
 
         discriminator_truth = Discriminator(trainable=True, input_size=SIZE,
                                             npy_path=DIS_NPY)
@@ -133,7 +131,7 @@ def train(ds, dis_learning_rate, gen_learning_rate):
             dis_train = tf.train.AdamOptimizer(learning_rate=dis_learning_rate) \
                 .minimize(dis_cost, var_list=discriminator_truth.get_all_var())
 
-        print "Net generated: %d" % (time.time() - start_time)
+        print("Net generated: %d" % (time.time() - start_time))
         start_time = time.time()
 
         # analysis
@@ -156,15 +154,15 @@ def train(ds, dis_learning_rate, gen_learning_rate):
         ckpt = tf.train.get_checkpoint_state(TRAIN_DIR)
         if ckpt and ckpt.model_checkpoint_path:
             saver.restore(sess, ckpt.model_checkpoint_path)
-            print "save restored:" + ckpt.model_checkpoint_path
+            print("save restored:" + ckpt.model_checkpoint_path)
         else:
             tf.initialize_all_variables().run()
-            print "all variables init"
+            print("all variables init")
 
-        print "Var init: %d" % (time.time() - start_time)
+        print("Var init: %d" % (time.time() - start_time))
 
         start_time = time.time()
-        for i in xrange(80000):
+        for i in range(80000):
             # disable this part for pre-train with conv22
             # train discriminator:
             feed_dict = {in_large: get_next_batch(ds), in_train_dis: True, in_train_gen: False}
@@ -180,7 +178,7 @@ def train(ds, dis_learning_rate, gen_learning_rate):
                 prob_gen_mean
             ], feed_dict)
 
-            print "dis-step:\t\t\t\t\t " \
+            print("dis-step:\t\t\t\t\t " \
                   "dis-cost:%.10f\t\t " \
                   "prob_gen:%.10f\t " \
                   "prob_truth:%.10f" \
@@ -188,7 +186,7 @@ def train(ds, dis_learning_rate, gen_learning_rate):
                       dis_cost_out,
                       prob_gen_out,
                       prob_truth_out
-                  )
+                  ))
 
             if math.isnan(dis_cost_out):
                 raise Exception("error found")
@@ -214,7 +212,7 @@ def train(ds, dis_learning_rate, gen_learning_rate):
             ], feed_dict)
 
             duration = time.time() - start_time
-            print "step: %d, " \
+            print("step: %d, " \
                   "\t(%.1f sec)\t " \
                   "gen-cost:%.10f\t " \
                   "prob_gen:%.10f,\t " \
@@ -229,7 +227,7 @@ def train(ds, dis_learning_rate, gen_learning_rate):
                       cost_content_out,
                       cost_generator_out,
                       cost_invariant_out
-                  )
+                  ))
 
             if math.isnan(gen_cost_out):
                 raise Exception("error found")
@@ -250,21 +248,23 @@ def train(ds, dis_learning_rate, gen_learning_rate):
 
                 saved_path = saver.save(sess, TRAIN_DIR + "/saves", global_step=gen_step,
                                         write_meta_graph=False)
-                print "net saved: " + saved_path
+                print("net saved: " + saved_path)
 
-                # print image
+                # print(image)
                 gen_out = sess.run(gen_result, feed_dict)
                 img_in_path = TRAIN_DIR + "/%d-input.jpg" % step_out
                 img_out_path = TRAIN_DIR + "/%d-output.jpg" % step_out
-                skimage.io.imsave(img_in_path, feed_dict[in_large][0])
-                skimage.io.imsave(img_out_path, gen_out[0])
-                print "img saved:", img_in_path, img_out_path
+                # skimage.io.imsave(img_in_path, feed_dict[in_large][0])
+                 scipy.misc.imsave(img_in_path, feed_dict[in_large][0])
+                # skimage.io.imsave(img_out_path, gen_out[0])
+                 scipy.misc.imsave(img_out_path, gen_out[0])
+                print("img saved:", img_in_path, img_out_path)
 
 
 def get_next_batch(ds):
     batch = ds.next_batch()
     while batch[0].shape != (SIZE, SIZE, 3):
-        print 'in correct size found: ', batch[0].shape
+        print('in correct size found: ', batch[0].shape)
         batch = ds.next_batch()
     return batch
 
@@ -288,9 +288,9 @@ def create_tiles(large, height, width, num):
     h_stride = height / num
     w_stride = width / num
     t_tiles = []
-    for y in xrange(num):
+    for y in range(num):
         row = []
-        for x in xrange(num):
+        for x in range(num):
             t_tile = tf.slice(large, [0, y * h_stride, x * w_stride, 0], [1, h_stride, w_stride, 3])
             row.append(t_tile)
         t_tiles.append(row)
@@ -319,14 +319,14 @@ def train_loop():
             trails += 1
             dis_learning_rate_trails = dis_learning_rate / 2 ** trails
             gen_lr_rate_trails = gen_learning_rate / 2 ** trails
-            print 'start new train: trail=%d, dis-lr=%d, gen-lr=%d' % (
-                trails, dis_learning_rate_trails, gen_lr_rate_trails)
+            print('start new train: trail=%d, dis-lr=%d, gen-lr=%d' % (
+                trails, dis_learning_rate_trails, gen_lr_rate_trails))
             train(ds, dis_learning_rate=dis_learning_rate_trails,
                   gen_learning_rate=gen_lr_rate_trails)
         except:
             import traceback
 
-            print traceback.format_exc()
+            print(traceback.format_exc())
 
             tf.reset_default_graph()
 

@@ -172,7 +172,7 @@ class Discriminator:
             self.var_dict[(name, idx)] = var
             self.var_dict_name[var_name] = var
 
-            # print var_name, var.get_shape().as_list()
+            # print(var_name, var.get_shape().as_list())
             assert var.get_shape() == initial_value.get_shape()
 
             return var
